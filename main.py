@@ -83,6 +83,17 @@ WORD = "Buffering"
 MAX_CHARS = 99
 
 
+def validate_word(word):
+    """Gate guard: raise unless the word is exactly one word of 1-99 chars."""
+    if not isinstance(word, str) or not word.strip():
+        raise ValueError("entry word must be non-empty text")
+    if len(word) > MAX_CHARS:
+        raise ValueError("entry word exceeds the 99-character gate")
+    if len(word.split()) != 1:
+        raise ValueError("entry word must be exactly one word")
+    return word
+
+
 def check_gate(word):
     """Mirror the sealed gate: 1-99 chars, not only whitespace, one word."""
     if not word or len(word) > MAX_CHARS:
@@ -100,13 +111,24 @@ def entry_path():
     return os.path.join(out_dir, "entry.txt")
 
 
+def verify_written(path):
+    """Write-back self-check: read entry.txt back and require word + newline."""
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    if content != WORD + "\n":
+        raise ValueError("written entry.txt does not match the entry word")
+    return content
+
+
 def main():
+    validate_word(WORD)
     if not check_gate(WORD):
         raise ValueError("entry word fails the 1-99 character gate")
     path = entry_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(WORD + "\n")
+    verify_written(path)
 
 
 if __name__ == "__main__":
